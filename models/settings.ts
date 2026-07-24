@@ -8,7 +8,8 @@ export type SettingsMap = Record<string, string>
 
 /**
  * Helper to extract LLM provider settings from SettingsMap.
- * Cloud mode always uses keys/models from .env; self-hosted uses per-user DB settings.
+ * Cloud is hard-coded to OpenAI via OPENAI_API_KEY / OPENAI_MODEL_NAME.
+ * Self-hosted uses per-user DB settings and provider order.
  */
 export function getLLMSettings(settings: SettingsMap) {
   if (!config.selfHosted.isEnabled) {
@@ -19,17 +20,7 @@ export function getLLMSettings(settings: SettingsMap) {
           apiKey: config.ai.openaiApiKey || "",
           model: config.ai.openaiModelName || PROVIDERS[0].defaultModelName,
         },
-        {
-          provider: "google" as LLMProvider,
-          apiKey: config.ai.googleApiKey || "",
-          model: config.ai.googleModelName || PROVIDERS[1].defaultModelName,
-        },
-        {
-          provider: "mistral" as LLMProvider,
-          apiKey: config.ai.mistralApiKey || "",
-          model: config.ai.mistralModelName || PROVIDERS[2].defaultModelName,
-        },
-      ].filter((provider) => provider.apiKey),
+      ],
     }
   }
 

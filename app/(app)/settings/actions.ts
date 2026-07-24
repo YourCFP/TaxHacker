@@ -11,6 +11,7 @@ import {
 import { userFormSchema } from "@/forms/users"
 import { ActionState } from "@/lib/actions"
 import { getCurrentUser } from "@/lib/auth"
+import config from "@/lib/config"
 import { uploadStaticImage } from "@/lib/uploads"
 import { codeFromName, randomHexColor } from "@/lib/utils"
 import { createCategory, deleteCategory, updateCategory } from "@/models/categories"
@@ -22,6 +23,19 @@ import { updateUser } from "@/models/users"
 import { Prisma, User } from "@/prisma/client"
 import { revalidatePath } from "next/cache"
 import path from "path"
+
+const CLOUD_BLOCKED_SETTINGS = new Set([
+  "openai_api_key",
+  "openai_model_name",
+  "google_api_key",
+  "google_model_name",
+  "mistral_api_key",
+  "mistral_model_name",
+  "openai_compatible_api_key",
+  "openai_compatible_model_name",
+  "openai_compatible_base_url",
+  "llm_providers",
+])
 
 export async function saveSettingsAction(
   _prevState: ActionState<SettingsMap> | null,
@@ -35,6 +49,9 @@ export async function saveSettingsAction(
   }
 
   for (const key in validatedForm.data) {
+    if (!config.selfHosted.isEnabled && CLOUD_BLOCKED_SETTINGS.has(key)) {
+      continue
+    }
     const value = validatedForm.data[key as keyof typeof validatedForm.data]
     if (value !== undefined) {
       await updateSettings(user.id, key, value)
