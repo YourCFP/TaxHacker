@@ -18,24 +18,13 @@ import { createCategory, deleteCategory, updateCategory } from "@/models/categor
 import { createCurrency, deleteCurrency, updateCurrency } from "@/models/currencies"
 import { createField, deleteField, updateField } from "@/models/fields"
 import { createProject, deleteProject, updateProject } from "@/models/projects"
-import { SettingsMap, updateSettings } from "@/models/settings"
+import { SELF_HOSTED_ONLY_SETTINGS, SettingsMap, updateSettings } from "@/models/settings"
 import { updateUser } from "@/models/users"
 import { Prisma, User } from "@/prisma/client"
 import { revalidatePath } from "next/cache"
 import path from "path"
 
-const CLOUD_BLOCKED_SETTINGS = new Set([
-  "openai_api_key",
-  "openai_model_name",
-  "google_api_key",
-  "google_model_name",
-  "mistral_api_key",
-  "mistral_model_name",
-  "openai_compatible_api_key",
-  "openai_compatible_model_name",
-  "openai_compatible_base_url",
-  "llm_providers",
-])
+const SELF_HOSTED_ONLY_SETTINGS_SET = new Set<string>(SELF_HOSTED_ONLY_SETTINGS)
 
 export async function saveSettingsAction(
   _prevState: ActionState<SettingsMap> | null,
@@ -49,7 +38,7 @@ export async function saveSettingsAction(
   }
 
   for (const key in validatedForm.data) {
-    if (!config.selfHosted.isEnabled && CLOUD_BLOCKED_SETTINGS.has(key)) {
+    if (SELF_HOSTED_ONLY_SETTINGS_SET.has(key) && !config.selfHosted.isEnabled) {
       continue
     }
     const value = validatedForm.data[key as keyof typeof validatedForm.data]
